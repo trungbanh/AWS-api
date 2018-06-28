@@ -7,6 +7,7 @@ const multerS3 = require('multer-s3');
 const cors = require('cors');
 const port = process.env.PORT || 3001;
 
+// code nay da ok sai duoc roi. add thang face qua s3 roi len collectin luon
 //config aws
 AWS.config.loadFromPath('./config.json');
 
@@ -35,7 +36,6 @@ const upload = multer({
     },
     key: function (req, file, cb) {
       const keyFile = file.originalname;
-      //   cb(null, `${Date.now().toString()}-${keyFile}`)
       cb(null, `${keyFile}`)
     }
   })
@@ -83,4 +83,44 @@ app.post('/upload', upload.single('image'), (req, res) => {
     }
   })
 })
-app.listen(port, () => console.log(`server running on port ${port}`));
+
+
+// cai nay chua hoang thanh mai lam tiep. 
+app.post('/search', (req, res) => {
+  var params = {
+    CollectionId: "faces",
+    FaceId: "a29ad926-0542-4b12-b9af-bb3c00b63b9e",
+    FaceMatchThreshold: 90,
+    MaxFaces: 10
+  };
+  rekognition.searchFaces(params, function (err, data) {
+    if (err) {
+      console.log(err, err.stack); // an error occurred
+    }
+    else {
+      for (let i = 0; i < data.FaceMatches.length; i++) {
+        var faces = {
+          FaceId: data.FaceMatches[i].Face.FaceId,
+          ExternalImageId: data.FaceMatches[i].Face.ExternalImageId,
+          Similarity: data.FaceMatches[i].Similarity
+        }
+        console.log(faces);
+      }
+      // tien hanh delete face da search
+      var params2 = {
+        "CollectionId": "faces",
+        "FaceIds": [
+          params.FaceId
+        ]
+      }
+      rekognition.deleteFaces(params2, (err, data) => {
+        if (err) {
+          console.log(err.toString())
+        }
+        else {
+          console.log(data)
+        }
+      })
+    }
+  })
+  app.listen(port, () => console.log(`server running on port ${port}`));

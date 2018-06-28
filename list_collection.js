@@ -13,8 +13,13 @@ var params = {
 rekognition.listFaces(params, function (err, data) {
   if (err) console.log(err, err.stack); // an error occurred
   else {
-    console.log(data);
-    console.log(data.Faces.length)
-
+    for(let i = 0; i < data.Faces.length; i++)
+    {
+      let face = {
+        FaceId: data.Faces[i].FaceId,
+        ExternalImage: data.Faces[i].ExternalImageId
+      }
+      console.log(face);
+    }
   }
 });
