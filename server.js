@@ -84,43 +84,27 @@ app.post('/upload', upload.single('image'), (req, res) => {
   })
 })
 
-
 // cai nay chua hoang thanh mai lam tiep. 
-app.post('/search', (req, res) => {
+app.post('/search', upload.single('image'), (req, res) => {
   var params = {
     CollectionId: "faces",
-    FaceId: "a29ad926-0542-4b12-b9af-bb3c00b63b9e",
     FaceMatchThreshold: 90,
-    MaxFaces: 10
+    Image: {
+      S3Object: {
+        Bucket: "awsrek",
+        Name: req.file.originalname
+      }
+    },
+    MaxFaces: 5
   };
-  rekognition.searchFaces(params, function (err, data) {
-    if (err) {
-      console.log(err, err.stack); // an error occurred
-    }
-    else {
-      for (let i = 0; i < data.FaceMatches.length; i++) {
-        var faces = {
-          FaceId: data.FaceMatches[i].Face.FaceId,
-          ExternalImageId: data.FaceMatches[i].Face.ExternalImageId,
-          Similarity: data.FaceMatches[i].Similarity
-        }
-        console.log(faces);
-      }
-      // tien hanh delete face da search
-      var params2 = {
-        "CollectionId": "faces",
-        "FaceIds": [
-          params.FaceId
-        ]
-      }
-      rekognition.deleteFaces(params2, (err, data) => {
-        if (err) {
-          console.log(err.toString())
-        }
-        else {
-          console.log(data)
-        }
-      })
-    }
+  rekognition.searchFacesByImage(params, function (err, data) {
+    if (err) console.log(err, err.stack); // an error occurred
+    else console.log(data);
+    res.json({
+      FaceId: data.FaceMatches[0].Face.FaceId,
+      Similarity: data.FaceMatches[0].Similarity,
+      ExternalImageId: data.FaceMatches[0].Face.ExternalImageId
+    })
   })
-  app.listen(port, () => console.log(`server running on port ${port}`));
+})
+app.listen(port, () => console.log(`server running on port ${port}`));
