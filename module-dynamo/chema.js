@@ -11,11 +11,11 @@ let schema = {
     TableName: "Account",
     KeySchema: [
         { AttributeName: "uid",  KeyType: "HASH"},
-        { AttributeName: "face", KeyType: "HASH"}
+        { AttributeName: "phone",  KeyType: "RANGE"},
     ],
     AttributeDefinitions: [       
         { AttributeName: "uid", AttributeType: "S" },
-        { AttributeName: "face", AttributeType: "S" }
+        { AttributeName: "phone", AttributeType: "S" }
     ],
     ProvisionedThroughput: {       
         ReadCapacityUnits: 10, 
@@ -30,3 +30,28 @@ dynamodb.createTable(params, function(err, data) {
         console.log("Created table. Table description JSON:", JSON.stringify(data, null, 2));
     }
 });
+
+/*
+Table-name: "Account"
+{
+    uid :
+    phone:
+    name:
+    money:
+    rechange [
+        {
+            time:
+            session:
+            money:
+        },
+    ]
+    history :[
+        {
+            time:
+            session:
+            quantity:
+            price:
+        },
+    ]
+}  
+*/
