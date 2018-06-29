@@ -1,16 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
-const AWS = require('aws-sdk');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const cors = require('cors');
 const port = process.env.PORT || 3001;
-
-// code nay da ok sai duoc roi. add thang face qua s3 roi len collectin luon
-//config aws
+const AWS = require('aws-sdk');
 AWS.config.loadFromPath('./config.json');
 
+// code nay da ok sai duoc roi. add thang face qua s3 roi len collectin luon
 // create express app
 const app = express();
 app.use(morgan('dev'));
@@ -19,11 +17,14 @@ app.use(bodyParser.urlencoded({
   extended: false
 }));
 app.use(cors());
+
+// router
 app.get('/', (req, res) => {
   res.json({
     message: 'hello world'
   });
-})
+});
+
 const s3 = new AWS.S3();
 var rekognition = new AWS.Rekognition({});
 // upload
@@ -56,6 +57,8 @@ app.post('/upload', upload.single('image'), (req, res) => {
       "ALL"
     ]
   }
+
+  // add face into faces collection 
   rekognition.indexFaces(params, (err, data) => {
     if (err) {
       console.log(err.toString());
@@ -66,9 +69,24 @@ app.post('/upload', upload.single('image'), (req, res) => {
         })
       }
       else if (data.FaceRecords.length > 1) {
+        // delete face added
+        for (let i = 0; i < data.FaceRecords.length; i++) {
+          var params = {
+            "CollectionId": "faces",
+            "FaceIds": [data.FaceRecords[i].Face.FaceId]
+          }
+          rekognition.deleteFaces(params, (err, data) => {
+            if (err) {
+              console.log(err.toString())
+            }
+            else {
+              console.log('delete face thanh congs');
+              console.log(data)
+            }
+          })
+        }
         res.json({
           message: 'Please Take only face. Please try again',
-          FaceId: data.FaceRecords
         })
       } else {
         res.json({
@@ -100,11 +118,13 @@ app.post('/search', upload.single('image'), (req, res) => {
   rekognition.searchFacesByImage(params, function (err, data) {
     if (err) console.log(err, err.stack); // an error occurred
     else if (data.FaceMatches.length) {
-      res.json({
+      let face = {
         FaceId: data.FaceMatches[0].Face.FaceId,
         Similarity: data.FaceMatches[0].Similarity,
         ExternalImageId: data.FaceMatches[0].Face.ExternalImageId
-      })
+      }
+      console.log(face);
+      res.json(face)
     } else {
       res.json({
         message: 'please try agin. can not face in server'
@@ -112,4 +132,7 @@ app.post('/search', upload.single('image'), (req, res) => {
     }
   })
 })
+
+
 app.listen(port, () => console.log(`server running on port ${port}`));
+// le quang sang
