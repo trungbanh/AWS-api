@@ -99,12 +99,17 @@ app.post('/search', upload.single('image'), (req, res) => {
   };
   rekognition.searchFacesByImage(params, function (err, data) {
     if (err) console.log(err, err.stack); // an error occurred
-    else console.log(data);
-    res.json({
-      FaceId: data.FaceMatches[0].Face.FaceId,
-      Similarity: data.FaceMatches[0].Similarity,
-      ExternalImageId: data.FaceMatches[0].Face.ExternalImageId
-    })
+    else if (data.FaceMatches.length) {
+      res.json({
+        FaceId: data.FaceMatches[0].Face.FaceId,
+        Similarity: data.FaceMatches[0].Similarity,
+        ExternalImageId: data.FaceMatches[0].Face.ExternalImageId
+      })
+    } else {
+      res.json({
+        message: 'please try agin. can not face in server'
+      })
+    }
   })
 })
 app.listen(port, () => console.log(`server running on port ${port}`));
